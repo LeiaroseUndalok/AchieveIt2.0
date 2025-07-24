@@ -31,11 +31,17 @@ const Mainlayout = () => {
     <>  
     
 
-    <Stack> 
-        <Stack.Screen name="index" options={{
-            headerShown: false
-        }}/>
-    </Stack>
+  <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+        initialRouteName="index"
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="editandaddscreens" />
+      </Stack>
 
     </>
   )

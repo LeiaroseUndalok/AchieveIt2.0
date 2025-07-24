@@ -15,7 +15,13 @@ const AuthLayout = () => {
         name="sign-up"
         options={{headerShown:false}}
       />
-      
+          <Stack>
+        <Stack.Screen name="note" options={{ title: "My Notes" }} />
+        <Stack.Screen name="customize" options={{ title: "Customize" }} />
+        <Stack.Screen name="sign-in" options={{ title: "Login" }} />
+      </Stack>
+      <StatusBar style="dark" />
+
     </Stack>
     <StatusBar backgroundColor="blue" style="light"/>
    </>

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
-import { useRouter } from "expo-router"; // Import useRouter
-import { icons } from "../../constants"; 
-import CustomButton from "../../components/CustomButton"; 
+import { useRouter } from "expo-router";
+import { icons } from "../../constants";
+import CustomButton from "../../components/CustomButton";
 import logo from "../../assets/logo.png";
 
 const SignIn = () => {
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -58,20 +58,6 @@ const SignIn = () => {
 
         {/* Sign In Button */}
         <CustomButton title="Login" handlePress={() => router.push("/task")} />
-
-        {/* Social Login */}
-        <Text style={styles.orText}>─── Or login with ───</Text>
-        <View style={styles.socialIcons}>
-          <TouchableOpacity>
-            <Image source={require("../../assets/fb.png")} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={require("../../assets/google.png")} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={require("../../assets/ios.png")} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
 
         {/* Sign Up Redirect */}
         <View style={styles.signUpRedirect}>
@@ -170,20 +156,6 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     alignSelf: "flex-end",
     marginBottom: 15,
-  },
-  orText: {
-    marginTop: 15,
-    color: "#445E8C",
-    fontSize: 14,
-  },
-  socialIcons: {
-    flexDirection: "row",
-    marginTop: 10,
-    gap: 10,
-  },
-  icon: {
-    width: 40,
-    height: 40,
   },
   signUpRedirect: {
     flexDirection: "row",

@@ -1,107 +1,167 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Modal } from 'react-native';
+// CalendarView.jsx
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  Modal, ScrollView, StyleSheet
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
-const CalendarView = ({ tasks = [], navigation }) => {
-  const [markedDates, setMarkedDates] = useState({});
-  const [selectedDate, setSelectedDate] = useState('');
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+// Format YYYY-MM-DD
+const formatDate = d => d.toISOString().split('T')[0];
+
+// Countdown helper
+const getCountdown = dueDate => {
+  const now = new Date();
+  const due = new Date(dueDate);
+  const diff = due - now;
+  if (diff <= 0) return 'Due!';
+  const d = Math.floor(diff / (1000*60*60*24));
+  const h = Math.floor((diff / (1000*60*60)) % 24);
+  const m = Math.floor((diff / (1000*60)) % 60);
+  const s = Math.floor((diff / 1000) % 60);
+  return `${d}d ${h}h ${m}m ${s}s`;
+};
+
+const CalendarView = () => {
   const [schedules, setSchedules] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [newTask, setNewTask] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [remindersVisible, setRemindersVisible] = useState(false);
+  const [now, setNow] = useState(new Date());
 
-  const getMarkedDates = () => {
-    const dates = {};
-    
-    schedules.forEach(schedule => {
-      if (schedule.dueDate) {
-        dates[schedule.dueDate] = { marked: true, dotColor: '#445E8C' };
-      }
+  // Update countdown every second
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Filter upcoming (<=3d)
+  const reminders = useMemo(
+    () => schedules
+      .filter(s => {
+        const diff = (new Date(s.dueDate) - now) / (1000*60*60*24);
+        return diff >= 0 && diff <= 3;
+      })
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
+    [schedules, now]
+  );
+
+  // Marked dates with dots + highlight today's deadlines
+  const markedDates = useMemo(() => {
+    const md = {};
+    schedules.forEach(s => {
+      md[s.dueDate] = md[s.dueDate] || { dots: [] };
+      md[s.dueDate].dots.push({ key: s.id, color: '#606F49' });
+      md[s.dueDate].marked = true;
+      if (new Date(s.dueDate) <= new Date(formatDate(now)))
+        md[s.dueDate].dotColor = '#FF6347';
     });
+    if (selectedDate && md[selectedDate]) {
+      md[selectedDate].selected = true;
+      md[selectedDate].selectedColor = '#6A88BE';
+    }
+    return md;
+  }, [schedules, selectedDate, now]);
 
-    return dates;
-  };
-
-  const handleDayPress = (day) => {
+  const handleDayPress = day => {
     setSelectedDate(day.dateString);
-    setNewTaskDueDate(day.dateString);
-    
-    const schedulesForSelectedDate = schedules.filter(schedule => schedule.dueDate === day.dateString);
-    if (schedulesForSelectedDate.length > 0) {
-      setSelectedSchedule(schedulesForSelectedDate);
-      setModalVisible(true);
-    }
+    setModalVisible(true);
   };
 
-  const handleAddSchedule = () => {
-    if (newTaskTitle.trim() !== '') {
-      const newSchedule = {
-        id: Date.now().toString(),
-        title: newTaskTitle,
-        dueDate: newTaskDueDate,
-      };
-      setSchedules([...schedules, newSchedule]);
-      setNewTaskTitle('');
-      setMarkedDates(getMarkedDates());
-    }
+  const addSchedule = () => {
+    if (!newTask.trim() || !selectedDate) return;
+    setSchedules(prev => [
+      ...prev,
+      { id: Date.now().toString(), title: newTask.trim(), dueDate: selectedDate }
+    ]);
+    setNewTask('');
   };
 
-  // Function to handle schedule deletion
-  const handleDeleteSchedule = (id) => {
-    setSchedules(schedules.filter(schedule => schedule.id !== id));
-    const updatedSelectedSchedule = selectedSchedule.filter(schedule => schedule.id !== id);
-    setSelectedSchedule(updatedSelectedSchedule);
-    setMarkedDates(getMarkedDates());
-  };
+  const deleteSchedule = id =>
+    setSchedules(prev => prev.filter(s => s.id !== id));
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Schedule Calendar</Text>
 
-      <Calendar 
-        markedDates={getMarkedDates()} 
+      {reminders.length > 0 && (
+        <TouchableOpacity
+          style={styles.reminderBanner}
+          onPress={() => setRemindersVisible(true)}
+        >
+          <Text style={styles.reminderTitle}>⏰ Reminders</Text>
+          {reminders.slice(0, 2).map(r => (
+            <Text key={r.id} style={styles.reminderText}>
+              {r.title} – {r.dueDate} ({getCountdown(r.dueDate)})
+            </Text>
+          ))}
+          {reminders.length > 2 && (
+            <Text style={styles.reminderMore}>
+              +{reminders.length - 2} more...
+            </Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      <Calendar
+        markingType="multi-dot"
+        markedDates={markedDates}
         onDayPress={handleDayPress}
       />
 
-      <Text style={styles.selectedDate}>Selected Date: {selectedDate || 'None'}</Text>
-
+      <Text style={styles.selectedDate}>Selected: {selectedDate || 'None'}</Text>
       <TextInput
         style={styles.input}
-        placeholder="New Schedule Title"
-        value={newTaskTitle}
-        onChangeText={setNewTaskTitle}
+        placeholder="New task title"
+        value={newTask}
+        onChangeText={setNewTask}
       />
-
-      <TouchableOpacity style={styles.addButton} onPress={handleAddSchedule}>
-        <Text style={styles.addButtonText}>Add</Text>
+      <TouchableOpacity style={styles.addBtn} onPress={addSchedule}>
+        <Text style={styles.addBtnText}>Add</Text>
       </TouchableOpacity>
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalHeader}>Schedules for {selectedDate}</Text>
-          {selectedSchedule && selectedSchedule.length > 0 ? (
-            selectedSchedule.map((item) => (
+      {/* Schedules Modal */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modal}>
+          <Text style={styles.modalHeader}>
+            {selectedDate} – {schedules.filter(s => s.dueDate === selectedDate).length} task(s)
+          </Text>
+          <ScrollView>
+            {schedules.filter(s => s.dueDate === selectedDate).map(item => (
               <View key={item.id} style={styles.scheduleItem}>
-                <Text style={styles.modalScheduleItem}>{item.title}</Text>
-                <TouchableOpacity 
-                  style={styles.deleteButton} 
-                  onPress={() => handleDeleteSchedule(item.id)}
-                >
-                  <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text>{item.title}</Text>
+                <TouchableOpacity onPress={() => deleteSchedule(item.id)}>
+                  <Text style={styles.deleteTxt}>🗑️</Text>
                 </TouchableOpacity>
               </View>
-            ))
-          ) : (
-            <Text>No schedules for this date</Text>
-          )}
-          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-            <Text style={styles.closeButtonText}>Close</Text>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={styles.closeTxt}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Reminders Modal */}
+      <Modal visible={remindersVisible} transparent animationType="slide">
+        <View style={styles.modal}>
+          <Text style={styles.modalHeader}>Upcoming Deadlines</Text>
+          <ScrollView>
+            {reminders.map(r => (
+              <View key={r.id} style={styles.scheduleItem}>
+                <Text>{r.title} – {r.dueDate} ({getCountdown(r.dueDate)})</Text>
+              </View>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={() => setRemindersVisible(false)}
+          >
+            <Text style={styles.closeTxt}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -110,110 +170,45 @@ const CalendarView = ({ tasks = [], navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#C9D9F0',
-    padding: 20,
+  container: { flex:1, padding:20, backgroundColor:'#C9D9F0' },
+  header: { fontSize: 28, fontWeight: 'bold',
+    textAlign: 'center', marginBottom: 20, marginTop:50,color: '#2f4145'},
+  reminderBanner: {
+    backgroundColor:'#FFF3CD', padding:10,
+    borderRadius:8, marginBottom:10
   },
-  header: {
-    fontFamily: 'Poppins-Bold',
-    fontSize: 24,
-    textAlign: 'center',
-    marginVertical: 10,
-    color: '#445E8C',
-  },
-  selectedDate: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 16,
-    marginVertical: 10,
-    color: '#6A88BE',
-  },
+  reminderTitle: { fontWeight:'bold', marginBottom:5 },
+  reminderText: { fontSize:14 },
+  reminderMore: { fontSize:14, color:'#555' },
+
+  selectedDate: { marginTop:10, fontSize:16, color:'#445E8C' },
   input: {
-    borderColor: '#6A88BE',
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 15,
-    backgroundColor: '#FFFFFF',
+    marginTop:10, borderWidth:1, borderColor:'#445E8C',
+    borderRadius:8, padding:10, backgroundColor:'#FFF'
   },
-  addButton: {
-    backgroundColor: '#6A88BE',
-    paddingVertical: 10,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
+  addBtn: {
+    backgroundColor:'#445E8C', padding:12,
+    borderRadius:8, alignItems:'center', marginTop:10
   },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Bold',
+  addBtnText: { color:'#FFF', fontWeight:'bold' },
+
+  modal: {
+    flex:1, backgroundColor:'#FFF', marginTop:200,
+    borderTopLeftRadius:20, borderTopRightRadius:20,
+    padding:20
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#C9D9F0',
-    padding: 20,
-    justifyContent: 'center',
-  },
-  modalHeader: {
-    fontFamily: 'Poppins-Bold',
-    fontSize: 24,
-    color: '#445E8C',
-    marginBottom: 10,
-  },
-  modalScheduleItem: {
-    fontFamily: 'Poppins-Medium',
-    fontSize: 18,
-    marginVertical: 5,
-  },
-  closeButton: {
-    backgroundColor: '#6A88BE',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-Bold',
-  },
+  modalHeader: { fontSize:20, marginBottom:10, fontWeight:'bold' },
   scheduleItem: {
-
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#FDF3E1',
-      paddingVertical: 15,
-      borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: '#E0D1B5',
-      padding: 15,
-      elevation: 3,
-    
+    flexDirection:'row', justifyContent:'space-between',
+    padding:12, backgroundColor:'#F0F0F0', borderRadius:8,
+    marginBottom:8
   },
-  deleteButton: {
-    backgroundColor: '#445E8C', // Dark green for delete button
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderColor: '#B1CDF6',
-    borderWidth: 2,
+  deleteTxt: { color:'red', fontSize:18 },
+  closeBtn: {
+    marginTop:10, padding:12, backgroundColor:'#445E8C',
+    borderRadius:8, alignItems:'center'
   },
-
-  deleteButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Bold',
-  },
+  closeTxt: { color:'#FFF', fontWeight:'bold' },
 });
 
 export default CalendarView;
-

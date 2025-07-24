@@ -1,13 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
 import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { AntDesign } from '@expo/vector-icons'; // For checkmark icon
+import { AntDesign } from '@expo/vector-icons';
 
 export default function App() {
-  const [fadeAnim] = useState(new Animated.Value(0)); // For fade-in animation
-  const [buttonAnim] = useState(new Animated.Value(1)); // For button press animation
-  const [text, setText] = useState(''); // For typewriter effect
+  const [fadeAnim] = useState(new Animated.Value(0)); // Fade-in animation
+  const [buttonAnim] = useState(new Animated.Value(1)); // Button press animation
+  const [text, setText] = useState(''); // Typewriter text
+  const [cursorVisible, setCursorVisible] = useState(true); // Cursor blinking
   const message = "Stay organized and enhance productivity with AchieveIt task manager.";
 
   // Typewriter effect
@@ -20,19 +21,28 @@ export default function App() {
       } else {
         clearInterval(interval);
       }
-    }, 0);
+    }, 30);
     return () => clearInterval(interval);
   }, []);
 
+  // Blinking cursor effect
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setCursorVisible((prev) => !prev);
+    }, 500);
+    return () => clearInterval(cursorInterval);
+  }, []);
+
+  // Fade-in animation
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 1500, // Duration for fade-in
+      duration: 1500,
       useNativeDriver: true,
     }).start();
   }, []);
 
-  // Button press animation
+  // Button animation
   const handlePressIn = () => {
     Animated.spring(buttonAnim, {
       toValue: 0.95,
@@ -50,20 +60,19 @@ export default function App() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      {/* Animated Checkmark with Title */}
+      {/* Title */}
       <View style={styles.titleContainer}>
         <AntDesign name="checkcircle" size={36} color="#6A88BE" style={styles.icon} />
         <Text style={styles.title}>AchieveIt</Text>
       </View>
 
-      {/* Typewriter Effect for SubText */}
-      <View style={styles.textContainer}>
-        <Text style={[styles.text, styles.extraLightText]}>
-          {text}
-        </Text>
-      </View>
+      {/* Message with typewriter effect */}
+      <Text style={styles.messageText}>
+        {text}
+        <Text style={styles.cursor}>{cursorVisible ? '|' : ' '}</Text>
+      </Text>
 
-      {/* Animated Button */}
+      {/* Button */}
       <Animated.View style={{ transform: [{ scale: buttonAnim }] }}>
         <TouchableOpacity
           style={styles.button}
@@ -74,6 +83,7 @@ export default function App() {
         </TouchableOpacity>
       </Animated.View>
 
+      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>by CCTC BSIT-A Students</Text>
         <Text style={styles.footerText}>© 2025 AchieveIt. All rights reserved.</Text>
@@ -87,7 +97,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#C9D9F0', // Light green background for a fresh look
+    backgroundColor: '#C9D9F0',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -98,42 +108,43 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    color: '#6A88BE', // Dark green for title
+    color: '#6A88BE',
     fontSize: 36,
     fontWeight: '800',
     textAlign: 'center',
     letterSpacing: 1.5,
-    marginLeft: 10, // Spacing between icon and title
+    marginLeft: 10,
   },
   icon: {
     marginRight: 10,
   },
-  textContainer: {
+  messageText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
+    color: '#445E8C',
+    textAlign: 'center',
+    lineHeight: 22,
     marginBottom: 30,
   },
-  text: {
-    fontSize: 20,
-    textAlign: 'center',
-  },
-  extraLightText: {
-    fontFamily: 'Poppins-ExtraLight', // Custom Poppins ExtraLight font
-    fontSize: 14,
-    color: '#6A88BE', // Lighter green for subtle elegance
-    marginBottom: 10,
+  cursor: {
+    color: '#445E8C',
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginLeft: 2,
   },
   button: {
-    backgroundColor: '#6A88BE', // Darker green button
+    backgroundColor: '#6A88BE',
     paddingVertical: 12,
     paddingHorizontal: 40,
-    borderRadius: 30, // Rounded button
-    shadowColor: '#606F49', // Dark shadow color
+    borderRadius: 30,
+    shadowColor: '#606F49',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
-    elevation: 8, // Add depth with shadow
+    elevation: 8,
   },
   buttonText: {
-    color: '#FFF', // White text for button
+    color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -145,7 +156,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   footerText: {
-    color: '#6A88BE', // Dark green for footer text
+    color: '#6A88BE',
     fontSize: 14,
   },
 });

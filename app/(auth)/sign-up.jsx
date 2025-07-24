@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
-import { useRouter } from "expo-router"; // Import useRouter
-import { icons } from "../../constants"; 
-import CustomButton from "../../components/CustomButton"; 
+import { useRouter } from "expo-router";
+import { icons } from "../../constants";
+import CustomButton from "../../components/CustomButton";
 import logo from "../../assets/logo.png";
 
 const SignUp = () => {
@@ -13,86 +13,77 @@ const SignUp = () => {
     password: "",
   });
 
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <Image source={logo} style={styles.logo} />
 
-        <Text style={styles.title}>Welcome to AchieveIt</Text>
-        <Text style={styles.subtitle}>SIGN UP</Text>
+           <Text style={styles.title}>Welcome to AchieveIt</Text>
+    <Text style={styles.subtitle}>SIGN UP</Text>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>Username :</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your username"
-            placeholderTextColor="#7B7B8B"
-            value={form.username}
-            onChangeText={(text) => setForm({ ...form, username: text })}
-          />
+    <View style={styles.form}>
+      <Text style={styles.label}>Username :</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your username"
+        placeholderTextColor="#7B7B8B"
+        value={form.username}
+        onChangeText={(text) => setForm({ ...form, username: text })}
+      />
 
-          <Text style={styles.label}>Email address :</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#7B7B8B"
-            keyboardType="email-address"
-            value={form.email}
-            onChangeText={(text) => setForm({ ...form, email: text })}
-          />
+      <Text style={styles.label}>Email address :</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your email"
+        placeholderTextColor="#7B7B8B"
+        keyboardType="email-address"
+        value={form.email}
+        onChangeText={(text) => setForm({ ...form, email: text })}
+      />
 
-          <Text style={styles.label}>Password :</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Enter your password"
-              placeholderTextColor="#7B7B8B"
-              secureTextEntry={!showPassword}
-              value={form.password}
-              onChangeText={(text) => setForm({ ...form, password: text })}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.eyeIcon} />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.label}>Confirm Password :</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Enter your password"
-              placeholderTextColor="#7B7B8B"
-              secureTextEntry={!showPassword}
-              value={form.password}
-              onChangeText={(text) => setForm({ ...form, password: text })}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.eyeIcon} />
-            </TouchableOpacity>
-          </View>
-        </View>
+      <Text style={styles.label}>Password :</Text>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Enter your password"
+          placeholderTextColor="#7B7B8B"
+          secureTextEntry={!showPassword}
+          value={form.password}
+          onChangeText={(text) => setForm({ ...form, password: text })}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.eyeIcon} />
+        </TouchableOpacity>
+      </View>
 
-        <CustomButton title="Sign Up" handlePress={() => router.push("/sign-in")} />
-        <Text style={styles.orText}>─── Or login with ───</Text>
-        <View style={styles.socialIcons}>
-          <TouchableOpacity>
-            <Image source={require("../../assets/fb.png")} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={require("../../assets/google.png")} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={require("../../assets/ios.png")} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Navigation to Sign In */}
-        <TouchableOpacity onPress={() => router.push("/sign-in")}>
-          <Text style={styles.signInText}>Already have an account? <Text style={styles.signInLink}>Sign In</Text></Text>
+      <Text style={styles.label}>Confirm Password :</Text>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Enter your password"
+          placeholderTextColor="#7B7B8B"
+          secureTextEntry={!showPassword}
+          value={form.password}
+          onChangeText={(text) => setForm({ ...form, password: text })}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.eyeIcon} />
         </TouchableOpacity>
       </View>
     </View>
+
+    <CustomButton title="Sign Up" handlePress={() => router.push("/sign-in")} />
+
+    {/* Navigation to Sign In */}
+    <TouchableOpacity onPress={() => router.push("/sign-in")}>
+      <Text style={styles.signInText}>
+        Already have an account? <Text style={styles.signInLink}>Sign In</Text>
+      </Text>
+    </TouchableOpacity>
+  </View>
+</View>
   );
 };
 
@@ -174,20 +165,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     tintColor: "#445E8C",
-  },
-  orText: {
-    marginTop: 10,
-    color: "#445E8C",
-    fontSize: 14,
-  },
-  socialIcons: {
-    flexDirection: "row",
-    marginTop: 8,
-    gap: 10,
-  },
-  icon: {
-    width: 40,
-    height: 40,
   },
   signInText: {
     marginTop: 15,
