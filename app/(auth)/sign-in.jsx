@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebase";
 import { icons } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import logo from "../../assets/logo.png";
@@ -8,10 +10,60 @@ import logo from "../../assets/logo.png";
 const SignIn = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
+
+  const handleSignIn = async () => {
+    const { email, password } = form;
+
+    if (!email || !password) {
+      return Alert.alert("Validation Error", "Please fill in all fields.");
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Sign in with Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      Alert.alert("Success", "Welcome back!");
+      router.push("/task");
+    } catch (error) {
+      let errorMessage = "An error occurred during sign in.";
+      let alertTitle = "Sign In Error";
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "This email is not registered. Please sign up first.";
+          alertTitle = "Email Not Registered";
+          break;
+        case 'auth/wrong-password':
+          errorMessage = "The password you entered is incorrect. Please try again.";
+          alertTitle = "Wrong Credentials";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "The email address is invalid. Please enter a valid email address.";
+          alertTitle = "Invalid Email";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "This account has been disabled.";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Too many failed attempts. Please try again later.";
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      Alert.alert(alertTitle, errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -46,7 +98,7 @@ const SignIn = () => {
               onChangeText={(text) => setForm({ ...form, password: text })}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.eyeIcon} />
+              <Image source={!showPassword ? icons.eye : icons.eyeHide} style={styles.eyeIcon} tintColor="#445E8C" />
             </TouchableOpacity>
           </View>
         </View>
@@ -57,7 +109,7 @@ const SignIn = () => {
         </TouchableOpacity>
 
         {/* Sign In Button */}
-        <CustomButton title="Login" handlePress={() => router.push("/task")} />
+        <CustomButton title="Login" handlePress={handleSignIn} isLoading={isLoading} />
 
         {/* Sign Up Redirect */}
         <View style={styles.signUpRedirect}>
@@ -84,10 +136,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     alignItems: "center",
-    shadowColor: "#445E8C",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    boxShadow: "0px 5px 8px rgba(68, 94, 140, 0.2)",
     elevation: 5,
   },
   logo: {
@@ -105,9 +154,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#445E8C",
     marginBottom: 20,
-    textShadowColor: "rgba(0, 0, 0, 0.2)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    textShadow: "1px 1px 3px rgba(0, 0, 0, 0.2)",
   },
   form: {
     width: "100%",
@@ -148,7 +195,6 @@ const styles = StyleSheet.create({
   eyeIcon: {
     width: 24,
     height: 24,
-    tintColor: "#445E8C",
   },
   forgotPassword: {
     fontSize: 14,

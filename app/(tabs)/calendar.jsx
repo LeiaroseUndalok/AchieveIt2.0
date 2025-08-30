@@ -5,6 +5,17 @@ import {
   Modal, ScrollView, StyleSheet
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import { db, auth } from '../../firebase';
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  query,
+  where
+} from 'firebase/firestore';
 
 // Format YYYY-MM-DD
 const formatDate = d => d.toISOString().split('T')[0];
@@ -29,6 +40,25 @@ const CalendarView = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [remindersVisible, setRemindersVisible] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDate, setEditDate] = useState('');
+  // Add a new state for reminder toggle
+  // const [isReminder, setIsReminder] = useState(false); // REMOVED
+
+  // Real-time fetch tasks from Firestore
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const q = query(collection(db, 'tasks'), where('userId', '==', auth.currentUser.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const tasksData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSchedules(tasksData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Update countdown every second
   useEffect(() => {
@@ -69,17 +99,46 @@ const CalendarView = () => {
     setModalVisible(true);
   };
 
-  const addSchedule = () => {
+  // Add a new schedule/task to Firestore
+  const addSchedule = async () => {
     if (!newTask.trim() || !selectedDate) return;
-    setSchedules(prev => [
-      ...prev,
-      { id: Date.now().toString(), title: newTask.trim(), dueDate: selectedDate }
-    ]);
+    await addDoc(collection(db, 'tasks'), {
+      title: newTask.trim(),
+      text: newTask.trim(), // for compatibility with tasks page
+      dueDate: selectedDate,
+      completed: false,
+      category: 'Calendar',
+      color: '#FFFBEA',
+      userId: auth.currentUser.uid
+    });
     setNewTask('');
+    // setIsReminder(false); // REMOVED
   };
 
-  const deleteSchedule = id =>
-    setSchedules(prev => prev.filter(s => s.id !== id));
+  // Delete a schedule/task from Firestore
+  const deleteSchedule = async (id) => {
+    await deleteDoc(doc(db, 'tasks', id));
+  };
+
+  // Edit a schedule/task in Firestore
+  const startEditTask = (task) => {
+    setEditingTask(task);
+    setEditTitle(task.title || task.text);
+    setEditDate(task.dueDate);
+  };
+
+  const saveEditTask = async () => {
+    if (!editingTask) return;
+    const taskRef = doc(db, 'tasks', editingTask.id);
+    await updateDoc(taskRef, {
+      title: editTitle,
+      text: editTitle,
+      dueDate: editDate
+    });
+    setEditingTask(null);
+    setEditTitle('');
+    setEditDate('');
+  };
 
   return (
     <View style={styles.container}>
@@ -93,7 +152,7 @@ const CalendarView = () => {
           <Text style={styles.reminderTitle}>⏰ Reminders</Text>
           {reminders.slice(0, 2).map(r => (
             <Text key={r.id} style={styles.reminderText}>
-              {r.title} – {r.dueDate} ({getCountdown(r.dueDate)})
+              {r.title || r.text} – {r.dueDate} ({getCountdown(r.dueDate)})
             </Text>
           ))}
           {reminders.length > 2 && (
@@ -117,6 +176,7 @@ const CalendarView = () => {
         value={newTask}
         onChangeText={setNewTask}
       />
+      {/* REMOVED Set as Reminder button */}
       <TouchableOpacity style={styles.addBtn} onPress={addSchedule}>
         <Text style={styles.addBtnText}>Add</Text>
       </TouchableOpacity>
@@ -130,16 +190,47 @@ const CalendarView = () => {
           <ScrollView>
             {schedules.filter(s => s.dueDate === selectedDate).map(item => (
               <View key={item.id} style={styles.scheduleItem}>
-                <Text>{item.title}</Text>
+                {editingTask && editingTask.id === item.id ? (
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      value={editTitle}
+                      onChangeText={setEditTitle}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      value={editDate}
+                      onChangeText={setEditDate}
+                    />
+                    <TouchableOpacity onPress={saveEditTask}>
+                      <Text style={styles.saveBtnText}>Save</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setEditingTask(null)}>
+                      <Text style={styles.cancelTxt}>Cancel</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <Text>{item.title || item.text}</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                      <TouchableOpacity onPress={() => startEditTask(item)}>
+                        <Text style={styles.addBtnText}>✏️ </Text>
+                      </TouchableOpacity>
                 <TouchableOpacity onPress={() => deleteSchedule(item.id)}>
-                  <Text style={styles.deleteTxt}>🗑️</Text>
+                  <Text style={styles.deleteTxt}> 🗑️</Text>
                 </TouchableOpacity>
+                    </View>
+                  </>
+                )}
               </View>
             ))}
           </ScrollView>
           <TouchableOpacity
             style={styles.closeBtn}
-            onPress={() => setModalVisible(false)}
+            onPress={() => {
+              setModalVisible(false);
+              setEditingTask(null);
+            }}
           >
             <Text style={styles.closeTxt}>Close</Text>
           </TouchableOpacity>
@@ -153,7 +244,7 @@ const CalendarView = () => {
           <ScrollView>
             {reminders.map(r => (
               <View key={r.id} style={styles.scheduleItem}>
-                <Text>{r.title} – {r.dueDate} ({getCountdown(r.dueDate)})</Text>
+                <Text>{r.title || r.text} – {r.dueDate} ({getCountdown(r.dueDate)})</Text>
               </View>
             ))}
           </ScrollView>
@@ -209,6 +300,30 @@ const styles = StyleSheet.create({
     borderRadius:8, alignItems:'center'
   },
   closeTxt: { color:'#FFF', fontWeight:'bold' },
+  cancelTxt: {
+  flex: 0,
+marginTop:15,
+borderWidth:1, 
+borderColor:'red',
+  backgroundColor: '#f8d7da',
+  padding:5,
+  borderRadius: 8,
+  alignItems: 'center',
+   color: 'red',
+  fontWeight: 'bold'
+},
+saveBtnText: {
+  flex: 0,
+marginTop:15,
+borderWidth:1, 
+borderColor:'#445E8C',
+  backgroundColor: '#C9D9F0',
+  padding: 5,
+  borderRadius: 8,
+  alignItems: 'center',                              
+     color: '#445E8C',
+  fontWeight: 'bold'
+},
 });
 
 export default CalendarView;

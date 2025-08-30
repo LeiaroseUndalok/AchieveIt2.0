@@ -53,6 +53,7 @@ const FormField = ({ title, value, placeholder, handleChangeText, errorMessage, 
               source={!showPassword ? icons.eye : icons.eyeHide}
               style={styles.icon}
               resizeMode="contain"
+              tintColor="#6A88BE"
             />
           </TouchableOpacity>
         )}
@@ -82,10 +83,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 55,
-    shadowColor: "#6A88BE",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 5 },
-    shadowRadius: 5,
+    boxShadow: "0px 5px 5px rgba(106, 136, 190, 0.2)",
     elevation: 3,
   },
   input: {
@@ -96,7 +94,6 @@ const styles = StyleSheet.create({
   icon: {
     width: 24,
     height: 24,
-    tintColor: "#6A88BE",
   },
   errorText: {
     color: "red",

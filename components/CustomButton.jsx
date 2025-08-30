@@ -6,8 +6,8 @@ const CustomButton = ({ title, handlePress, isLoading }) => {
 
   const animatePress = () => {
     Animated.sequence([
-      Animated.timing(buttonScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
-      Animated.timing(buttonScale, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(buttonScale, { toValue: 0.95, duration: 100, useNativeDriver: false }),
+      Animated.timing(buttonScale, { toValue: 1, duration: 100, useNativeDriver: false }),
     ]).start();
   };
 
@@ -44,10 +44,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#6A88BE",
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 5 },
-    shadowRadius: 10,
+    boxShadow: "0px 5px 10px rgba(106, 136, 190, 0.4)",
     elevation: 5,
   },
   buttonText: {

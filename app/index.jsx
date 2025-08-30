@@ -5,40 +5,15 @@ import React, { useEffect, useState } from 'react';
 import { AntDesign } from '@expo/vector-icons';
 
 export default function App() {
-  const [fadeAnim] = useState(new Animated.Value(0)); // Fade-in animation
-  const [buttonAnim] = useState(new Animated.Value(1)); // Button press animation
-  const [text, setText] = useState(''); // Typewriter text
-  const [cursorVisible, setCursorVisible] = useState(true); // Cursor blinking
-  const message = "Stay organized and enhance productivity with AchieveIt task manager.";
-
-  // Typewriter effect
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < message.length) {
-        setText((prev) => prev + message.charAt(i));
-        i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 30);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Blinking cursor effect
-  useEffect(() => {
-    const cursorInterval = setInterval(() => {
-      setCursorVisible((prev) => !prev);
-    }, 500);
-    return () => clearInterval(cursorInterval);
-  }, []);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [buttonAnim] = useState(new Animated.Value(1));
 
   // Fade-in animation
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1500,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, []);
 
@@ -46,7 +21,7 @@ export default function App() {
   const handlePressIn = () => {
     Animated.spring(buttonAnim, {
       toValue: 0.95,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   };
 
@@ -54,7 +29,7 @@ export default function App() {
     Animated.spring(buttonAnim, {
       toValue: 1,
       friction: 5,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   };
 
@@ -65,12 +40,8 @@ export default function App() {
         <AntDesign name="checkcircle" size={36} color="#6A88BE" style={styles.icon} />
         <Text style={styles.title}>AchieveIt</Text>
       </View>
-
-      {/* Message with typewriter effect */}
-      <Text style={styles.messageText}>
-        {text}
-        <Text style={styles.cursor}>{cursorVisible ? '|' : ' '}</Text>
-      </Text>
+<Text style={styles.subtitle}>Stay organized and enhance productivity with AchieveIt</Text>
+      {/* Removed animated message */}
 
       {/* Button */}
       <Animated.View style={{ transform: [{ scale: buttonAnim }] }}>
@@ -85,7 +56,7 @@ export default function App() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>by CCTC BSIT-A Students</Text>
+        <Text style={styles.footerText}>by CCTC-CCS</Text>
         <Text style={styles.footerText}>© 2025 AchieveIt. All rights reserved.</Text>
       </View>
 
@@ -105,7 +76,7 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   title: {
     color: '#6A88BE',
@@ -118,29 +89,12 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 10,
   },
-  messageText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 16,
-    color: '#445E8C',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 30,
-  },
-  cursor: {
-    color: '#445E8C',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginLeft: 2,
-  },
   button: {
     backgroundColor: '#6A88BE',
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 30,
-    shadowColor: '#606F49',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
+    boxShadow: '0px 4px 6px rgba(96, 111, 73, 0.4)',
     elevation: 8,
   },
   buttonText: {
@@ -159,4 +113,14 @@ const styles = StyleSheet.create({
     color: '#6A88BE',
     fontSize: 14,
   },
+  subtitle: {
+  color: '#6A88BE',
+  fontSize: 16,
+  textAlign: 'center',
+  marginTop: 0,
+  marginBottom: 10,
+  paddingHorizontal: 10,
+  lineHeight: 22,
+},
+
 });
